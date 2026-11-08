@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NAT Oluşturucu</title>
+<style>body{margin:0}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Fraunces:ital,wght@1,500;1,600&display=swap">
+<style>
+/* Düzen: dar tek sütun araç; üstte yükleme kartı, altta önizleme tablosu ve indirme */
+:root{
+  --bg:#f7f4ec; --kart:#fffdf8; --fg:#0f2a21; --ikincil:#4b5f56; --cizgi:#e1d9c6;
+  --yesil:#123a2d; --altin:#b8913f; --altin-acik:#efe1bd; --hata:#b3392b; --ok:#2e7d55;
+  --display:'Archivo','Segoe UI',Arial,sans-serif; --serif:'Fraunces',Georgia,serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1d17; --kart:#132a22; --fg:#eef0e8; --ikincil:#a9bbb1; --cizgi:#27443a;
+  --yesil:#d8c08a; --altin:#d8b66a; --altin-acik:#2b3b2c; --hata:#ef8a7c; --ok:#7fd1a4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1d17; --kart:#132a22; --fg:#eef0e8; --ikincil:#a9bbb1; --cizgi:#27443a;
+  --yesil:#d8c08a; --altin:#d8b66a; --altin-acik:#2b3b2c; --hata:#ef8a7c; --ok:#7fd1a4; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--display);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+.sar{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:6px}
+.ust{font-family:var(--serif);font-style:italic;color:var(--altin);font-size:18px}
+h1{margin:0;font-size:clamp(30px,6vw,46px);font-weight:900;letter-spacing:-.01em;line-height:1.05;text-wrap:balance}
+h1 span{color:var(--altin)}
+.alt{color:var(--ikincil);max-width:62ch;margin:0}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:14px;padding:22px}
+.yukle{display:flex;flex-direction:column;gap:14px;border:2px dashed var(--altin);border-radius:12px;padding:26px;text-align:center;cursor:pointer;transition:background .15s}
+.yukle:hover,.yukle.uzerinde{background:var(--altin-acik)}
+.yukle:focus-within{outline:3px solid var(--altin);outline-offset:3px}
+.yukle b{font-size:20px}
+.yukle small{color:var(--ikincil)}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.ayar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:14px;color:var(--ikincil);font-size:14px}
+.ayar label{display:flex;gap:8px;align-items:center}
+.ayar input{width:72px;font:inherit;padding:6px 8px;border:1px solid var(--cizgi);border-radius:8px;background:var(--bg);color:var(--fg);text-transform:uppercase}
+.durum{font-size:15px;padding:12px 14px;border-radius:10px;background:var(--altin-acik);color:var(--fg)}
+.durum.hata{background:transparent;border:1px solid var(--hata);color:var(--hata)}
+.sayfa{display:flex;flex-direction:column;gap:12px}
+.sayfa-ust{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.sayfa-ust h2{margin:0;font-size:22px;font-weight:800}
+.etiket{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--altin)}
+.butonlar{display:flex;flex-wrap:wrap;gap:10px}
+button{font:inherit;font-weight:800;border:0;border-radius:10px;padding:11px 18px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--altin);outline-offset:2px}
+.indir{background:var(--altin);color:#13261e}
+.indir:hover{filter:brightness(1.06)}
+.kopya{background:transparent;border:1.5px solid var(--cizgi);color:var(--fg)}
+.tablo{overflow-x:auto;border:1px solid var(--cizgi);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--yesil);color:var(--bg);padding:9px 12px;font-weight:700;white-space:nowrap}
+:root[data-theme="dark"] th{color:#0c1d17}
+td{padding:8px 12px;border-top:1px solid var(--cizgi);white-space:nowrap}
+td.ad{font-weight:700}
+tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--altin-acik) 45%,transparent)}
+.not{font-size:13px;color:var(--ikincil)}
+.ornek-bant{font-size:13px;font-weight:700;color:var(--altin);border:1px solid var(--altin);border-radius:999px;padding:2px 10px}
+.bilgi{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.bilgi div{min-width:0}
+.bilgi h3{margin:0 0 6px;font-size:15px}
+.bilgi p{margin:0;font-size:14px;color:var(--ikincil)}
+code{font-family:Consolas,monospace;font-size:13px;background:var(--altin-acik);padding:1px 5px;border-radius:4px}
+footer{border-top:1px solid var(--cizgi);padding-top:16px;display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:space-between;color:var(--ikincil);font-size:14px}
+footer b{color:var(--fg)}
+footer a{color:var(--altin);font-weight:700;text-decoration:none}
+footer a:hover{text-decoration:underline}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head><body>
+<div class="sar">
+  <header>
+    <div class="ust">Swiss Manager için</div>
+    <h1>NAT <span>Oluşturucu</span></h1>
+    <p class="alt">Ad soyad listenizi seçin; Swiss Manager’ın okuduğu NAT dosyası (<code>SOYAD, Ad</code> biçiminde) hazırlanır. Liste yalnızca sizin tarayıcınızda işlenir, hiçbir yere gönderilmez.</p>
+  </header>
+
+  <section class="kart">
+    <label class="yukle" id="yukle" for="dosya">
+      <b>Listeyi seçin ya da buraya sürükleyin</b>
+      <small>Excel (.xlsx, .xls), CSV ya da metin (.txt) · Sütunlar: ADI + SOYADI ya da tek sütunda AD SOYAD · Varsa TC, doğum tarihi, okul, cinsiyet de alınır</small>
+      <input type="file" id="dosya" accept=".xlsx,.xls,.xlsm,.csv,.txt">
+    </label>
+    <div class="ayar">
+      <label for="fed">Fed (ülke kodu) <input id="fed" value="TUR" maxlength="3"></label>
+      <span>ID_No: TC varsa TC, yoksa sıra numarası</span>
+    </div>
+  </section>
+
+  <div id="durum" class="durum" role="status">Aşağıda örnek bir liste görüyorsunuz. Kendi listenizi seçince yerine o gelir.</div>
+  <div id="sonuc"></div>
+
+  <section class="kart bilgi">
+    <div><h3>Swiss Manager’a yükleme</h3><p>Rating listeleri → Kuvvet derecesi yükle → <b>Unicode versiyonu</b> işaretli → liste <b>ADD</b> → NAT dosyası → Almaya başla.</p></div>
+    <div><h3>İki kelimeli soyadlar</h3><p>Tek sütunda hepsi büyük harfse son kelime soyad sayılır. “Elif AKYÜZ TOSUNOĞLU” gibi soyadı büyük, adı küçük yazın ya da ADI / SOYADI sütunlarını ayırın.</p></div>
+    <div><h3>Çok sayfalı Excel</h3><p>Her sayfa için ayrı bir NAT dosyası hazırlanır; her birinin kendi indirme düğmesi var.</p></div>
+  </section>
+
+  <footer>
+    <span>Hazırlayanlar: <b>Ali BAKLA</b> · <b>Esra Aslıhan CİNBİŞ</b></span>
+    <span><b>Ankara Zeka ve Bilim Akademisi</b> · <a href="https://www.instagram.com/ankara_akilvezekaoyunlari/">@ankara_akilvezekaoyunlari</a></span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/*MANTIK-BAS*/
+const NAT_BASLIK = ["ID_No","Name","Sex","Fed","Clubnumber","ClubName","Birthday","Rtg_Nat","Fide_No","Rtg_Int","Title"];
+const katla = s => String(s).replace(/I/g,"ı").replace(/İ/g,"i").toLowerCase().replace(/[çğıöşüâîû]/g, c => ({ç:"c",ğ:"g",ı:"i",ö:"o",ş:"s",ü:"u",â:"a",î:"i",û:"u"})[c]);
+const trUst = s => String(s).replace(/i/g,"İ").replace(/ı/g,"I").toUpperCase();
+function trBaslik(s){
+  return String(s).split(/\s+/).filter(Boolean).map(w => {
+    w = w.replace(/I/g,"ı").replace(/İ/g,"i").toLowerCase();
+    return w.split(".").map(p => p ? (({i:"İ",ı:"I"})[p[0]] || p[0].toUpperCase()) + p.slice(1) : p).join(".");
+  }).join(" ");
+}
+function tarih(v){
+  if (v == null || v === "") return null;
+  if (v instanceof Date && !isNaN(v)) return new Date(Date.UTC(v.getFullYear(), v.getMonth(), v.getDate()));
+  const s = String(v).trim(); let m;
+  if ((m = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/))) return gecerli(+m[3], +m[2], +m[1]);
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return gecerli(+m[1], +m[2], +m[3]);
+  return null;
+}
+function gecerli(y, a, g){ const d = new Date(Date.UTC(y, a - 1, g)); return d.getUTCMonth() === a - 1 && d.getUTCDate() === g ? d : null; }
+const HARF = /^[A-Za-zÇĞİÖŞÜçğıöşüÂÎÛâîû.'\-]+$/;
+function isimMi(v){
+  if (typeof v !== "string") return false;
+  const k = v.trim().split(/\s+/);
+  return k.length >= 2 && k.every(x => HARF.test(x)) && !/\d/.test(v);
+}
+function adSoyadAyir(tam){
+  const kel = tam.trim().split(/\s+/);
+  const ust = kel.filter(k => k === trUst(k) && /[A-ZÇĞİÖŞÜ]{2,}/.test(k));
+  if (ust.length && ust.length < kel.length) return [kel.filter(k => !ust.includes(k)).join(" "), ust.join(" ")];
+  return [kel.slice(0, -1).join(" "), kel[kel.length - 1]];
+}
+const ANAHTAR = {adsoyad:["ad soyad","adi soyadi","ad-soyad","adsoyad","isim soyisim","isim","ogrenci","sporcu","name"],
+  ad:["adi","ad","isim"], soyad:["soyadi","soyad","soyisim","soyisimi"], tc:["tc","kimlik","id no","id_no","tckn"],
+  dogum:["dogum","birth"], okul:["okul","kulup","club","kurum"], cins:["cinsiyet","cins","sex"]};
+function baslikBul(rows){
+  for (let i = 0; i < Math.min(rows.length, 15); i++){
+    const k = (rows[i] || []).map(x => typeof x === "string" ? katla(x).trim() : "");
+    const sut = {};
+    k.forEach((x, j) => {
+      if (!x) return;
+      const bas = a => x.startsWith(a);
+      if (ANAHTAR.soyad.some(a => x === a || x.startsWith(a + " ")) && !("soyad" in sut) && !bas("adi soyadi") && !bas("ad soyad")) sut.soyad = j;
+      else if (ANAHTAR.adsoyad.includes(x) || bas("ad soyad") || bas("adi soyadi") || bas("adi ve soyadi")) sut.adsoyad = j;
+      else if (ANAHTAR.ad.includes(x) && !("ad" in sut)) sut.ad = j;
+      else if (ANAHTAR.tc.some(bas)) { if (!("tc" in sut)) sut.tc = j; }
+      else if (ANAHTAR.dogum.some(bas)) { if (!("dogum" in sut)) sut.dogum = j; }
+      else if (ANAHTAR.okul.some(bas)) { if (!("okul" in sut)) sut.okul = j; }
+      else if (ANAHTAR.cins.some(bas)) { if (!("cins" in sut)) sut.cins = j; }
+    });
+    if (("ad" in sut && "soyad" in sut) || "adsoyad" in sut) return [i, sut];
+  }
+  return [null, null];
+}
+function sporcular(rows){
+  const [i, sut] = baslikBul(rows); const out = [];
+  if (i !== null){
+    for (const r0 of rows.slice(i + 1)){
+      const r = r0 || []; const g = k => k in sut ? r[sut[k]] : null;
+      let ad, soyad;
+      if ("ad" in sut && "soyad" in sut){
+        ad = g("ad"); soyad = g("soyad");
+        if (!ad || !soyad || !String(ad).trim()) continue;
+        ad = String(ad).trim(); soyad = String(soyad).trim();
+      } else {
+        const tam = g("adsoyad"); if (!isimMi(tam)) continue;
+        [ad, soyad] = adSoyadAyir(tam);
+      }
+      const tc = g("tc"); const okul = g("okul"); const cins = g("cins");
+      out.push({ad, soyad, tc: tc == null || tc === "" ? "" : String(tc).replace(/\D/g, ""), dogum: tarih(g("dogum")),
+                okul: okul ? String(okul).trim() : "", cins: cins ? String(cins).trim() : ""});
+    }
+    return [out, "başlıklı tablo"];
+  }
+  const aday = [];
+  rows.forEach((r, ri) => (r || []).forEach((v, ci) => {
+    if (isimMi(v)){
+      const sira = ci > 0 && typeof r[ci - 1] === "number" ? r[ci - 1] : null;
+      aday.push([sira !== null ? sira : 1e6 + ci * 1e4 + ri, v.trim()]);
+    }
+  }));
+  aday.sort((a, b) => a[0] - b[0]);
+  for (const [, tam] of aday){ const [ad, soyad] = adSoyadAyir(tam); out.push({ad, soyad, tc: "", dogum: null, okul: "", cins: ""}); }
+  return [out, "başlıksız liste"];
+}
+function natSatirlari(liste, fed){
+  return liste.map((s, n) => {
+    let cins = "";
+    if (s.cins){ const c = katla(s.cins); cins = /^(k|f|w)/.test(c) ? "f" : /^(e|m)/.test(c) ? "m" : ""; }
+    return [s.tc ? Number(s.tc) : n + 1, `${trUst(s.soyad)}, ${trBaslik(s.ad)}`, cins, fed, null, s.okul || null, s.dogum, null, null, null, null];
+  });
+}
+/*MANTIK-SON*/
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+const gunAy = d => d ? `${String(d.getUTCDate()).padStart(2,"0")}.${String(d.getUTCMonth()+1).padStart(2,"0")}.${d.getUTCFullYear()}` : "";
+const indirmeler = {save: async ({filename, data}) => { const u = URL.createObjectURL(data); const a = document.createElement('a'); a.href = u; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); return {status: 'saved'}; }};
+
+let sonuclar = [];
+function fed(){ return ($("fed").value || "TUR").trim().toUpperCase().slice(0, 3) || "TUR"; }
+
+function xlsxYap(satirlar){
+  const ws = XLSX.utils.aoa_to_sheet([NAT_BASLIK, ...satirlar], {cellDates: true});
+  for (let r = 1; r <= satirlar.length; r++){
+    const a = ws[XLSX.utils.encode_cell({r, c: 0})]; if (a) a.z = "0";
+    const g = ws[XLSX.utils.encode_cell({r, c: 6})]; if (g && g.t === "d") g.z = "dd.mm.yyyy";
+  }
+  ws["!cols"] = [14,32,6,6,11,30,12,9,10,9,7].map(w => ({wch: w}));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  return new Blob([XLSX.write(wb, {bookType: "xlsx", type: "array"})], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+
+async function indir(k){
+  const s = sonuclar[k];
+  try {
+    await indirmeler.save({filename: s.dosya, data: xlsxYap(natSatirlari(s.liste, fed()))});
+    durum(`${s.dosya} indirildi. İndirilenler klasörünüzde.`);
+  } catch (e) {
+    if (e && e.code === "declined") return;
+    durum(e && e.code === "rate_limited" ? "Bir indirme penceresi zaten açık; onu kapatıp tekrar deneyin." :
+      "Dosya indirilemedi. “Tabloyu kopyala” ile Excel’e yapıştırabilirsiniz.", true);
+  }
+}
+async function kopyala(k){
+  const s = sonuclar[k];
+  const metin = [NAT_BASLIK, ...natSatirlari(s.liste, fed()).map(r => r.map((v, j) => j === 6 ? gunAy(v) : v ?? ""))].map(r => r.join("\t")).join("\n");
+  try { await navigator.clipboard.writeText(metin); durum("Tablo kopyalandı. Boş bir Excel sayfasının A1 hücresine yapıştırıp .xlsx olarak kaydedin."); }
+  catch (e) { durum("Kopyalanamadı; tabloyu seçip Ctrl+C ile kopyalayın.", true); }
+}
+function durum(m, hata){ const d = $("durum"); d.textContent = m; d.className = "durum" + (hata ? " hata" : ""); }
+
+function ciz(){
+  $("sonuc").innerHTML = sonuclar.map((s, k) => `
+  <section class="kart sayfa">
+    <div class="sayfa-ust">
+      <div><div class="etiket">${esc(s.sayfa)} · ${s.liste.length} sporcu · ${esc(s.yontem)}</div><h2>${esc(s.dosya)}</h2></div>
+      <div class="butonlar">
+        ${s.ornek ? '<span class="ornek-bant">Örnek liste</span>' : (indirmeler ? `<button class="indir" id="indir-${k}" onclick="indir(${k})">NAT dosyasını indir</button>` : "")}
+        ${s.ornek ? "" : `<button class="kopya" id="kopya-${k}" onclick="kopyala(${k})">Tabloyu kopyala</button>`}
+      </div>
+    </div>
+    <div class="tablo"><table>
+      <thead><tr><th>ID_No</th><th>Name</th><th>Sex</th><th>Fed</th><th>ClubName</th><th>Birthday</th></tr></thead>
+      <tbody>${natSatirlari(s.liste, fed()).map(r => `<tr><td>${esc(r[0])}</td><td class="ad">${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[5] ?? "")}</td><td>${gunAy(r[6])}</td></tr>`).join("")}</tbody>
+    </table></div>
+  </section>`).join("");
+}
+
+function dosyaAdi(temel, sayfa, cok){ return cok ? `${temel}_${sayfa.replace(/[^\wÇĞİÖŞÜçğıöşü-]+/g, "_")}_NAT.xlsx` : `${temel}_NAT.xlsx`; }
+
+async function oku(file){
+  try {
+    const temel = file.name.replace(/\.[^.]+$/, "");
+    let sayfalar;
+    if (/\.txt$/i.test(file.name)){
+      const metin = await file.text();
+      const rows = metin.split(/\r?\n/).filter(x => x.trim()).map(x => {
+        const ayr = x.includes(";") ? ";" : x.includes("\t") ? "\t" : x.includes(",") ? "," : null;
+        return ayr ? x.split(ayr).map(y => y.trim()) : [x.trim()];
+      });
+      sayfalar = [[temel, rows]];
+    } else {
+      const wb = XLSX.read(await file.arrayBuffer(), {type: "array", cellDates: true});
+      sayfalar = wb.SheetNames.map(n => [n, XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, raw: true, defval: null})]);
+    }
+    const dolu = sayfalar.map(([n, rows]) => { const [liste, yontem] = sporcular(rows); return {sayfa: n, liste, yontem}; }).filter(s => s.liste.length);
+    if (!dolu.length){ sonuclar = []; ciz(); durum("Bu dosyada isim bulunamadı. Başlık satırında ADI ve SOYADI (ya da AD SOYAD) sütunu olmalı.", true); return; }
+    sonuclar = dolu.map(s => ({...s, dosya: dosyaAdi(temel, s.sayfa, dolu.length > 1)}));
+    ciz();
+    const top = sonuclar.reduce((a, s) => a + s.liste.length, 0);
+    durum(`${top} sporcu okundu${sonuclar.length > 1 ? `, ${sonuclar.length} sayfa` : ""}. Tabloyu kontrol edin, sonra “NAT dosyasını indir”e basın.` +
+          (indirmeler ? "" : " Bu görünümde indirme kapalı; “Tabloyu kopyala”yı kullanın."));
+  } catch (e) { durum("Dosya okunamadı. Excel, CSV ya da metin dosyası seçtiğinizden emin olun.", true); }
+}
+
+$("dosya").addEventListener("change", e => { const f = e.target.files[0]; if (f) oku(f); });
+const alan = $("yukle");
+["dragenter","dragover"].forEach(t => alan.addEventListener(t, e => { e.preventDefault(); alan.classList.add("uzerinde"); }));
+["dragleave","drop"].forEach(t => alan.addEventListener(t, e => { e.preventDefault(); alan.classList.remove("uzerinde"); }));
+alan.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) oku(f); });
+$("fed").addEventListener("input", ciz);
+
+// Açılışta örnek: tek sütunlu, karışık yazımlı bir liste nasıl dönüşüyor
+sonuclar = [{sayfa: "Örnek", yontem: "başlıklı tablo", dosya: "Ornek_Liste_NAT.xlsx", ornek: true,
+  liste: sporcular([["S.NO","AD SOYAD","OKULU"],[1,"Ayşe Nur Demir","Atatürk Ortaokulu"],[2,"YILMAZ Elif","Fatih Ortaokulu"],[3,"Mehmet Ali KAYA","Cumhuriyet Ortaokulu"],[4,"Ömer Faruk Işık","Yunus Emre Ortaokulu"]])[0]}];
+ciz();
+</script>
+
+</body></html>
